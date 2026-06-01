@@ -158,6 +158,7 @@ button:disabled {
 .bottom-link svg,
 .icon-button svg,
 .primary-action svg,
+.danger-action svg,
 .secondary-action svg,
 .soft-button svg,
 .search-field svg,
@@ -237,6 +238,7 @@ button:disabled {
 
 .icon-button,
 .primary-action,
+.danger-action,
 .secondary-action,
 .soft-button,
 .ghost-button,
@@ -251,6 +253,7 @@ button:disabled {
 
 .icon-button:hover,
 .primary-action:hover,
+.danger-action:hover,
 .secondary-action:hover,
 .soft-button:hover,
 .ghost-button:hover,
@@ -270,6 +273,7 @@ button:disabled {
 }
 
 .primary-action,
+.danger-action,
 .secondary-action,
 .soft-button,
 .ghost-button {
@@ -290,6 +294,13 @@ button:disabled {
   box-shadow: 5px 5px 0 #151214;
 }
 
+.danger-action {
+  border: 2px solid #151214;
+  color: #151214;
+  background: #ff7a70;
+  box-shadow: 5px 5px 0 #151214;
+}
+
 .primary-action.full {
   width: 100%;
 }
@@ -302,11 +313,13 @@ button:disabled {
 
 .secondary-action:hover,
 .icon-button:hover,
-.primary-action:hover {
+.primary-action:hover,
+.danger-action:hover {
   box-shadow: 7px 7px 0 #151214;
 }
 
 .primary-action:disabled,
+.danger-action:disabled,
 .secondary-action:disabled,
 .icon-button:disabled {
   transform: none;
@@ -658,7 +671,7 @@ button:disabled {
   grid-template-columns: repeat(7, minmax(0, 1fr));
   align-items: end;
   gap: 10px;
-  min-height: 170px;
+  min-height: 188px;
   padding-top: 10px;
 }
 
@@ -667,7 +680,18 @@ button:disabled {
   align-content: end;
   gap: 8px;
   min-width: 0;
-  height: 155px;
+  height: 174px;
+}
+
+.bar-value {
+  overflow: hidden;
+  color: #151214;
+  font-size: 0.68rem;
+  font-weight: 950;
+  line-height: 1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bar-track {
@@ -1350,7 +1374,8 @@ button:disabled {
   background: transparent;
 }
 
-.activation-dialog {
+.activation-dialog,
+.confirm-dialog {
   width: min(500px, calc(100% - 24px));
   padding: 0;
   border: 0;
@@ -1359,12 +1384,14 @@ button:disabled {
   background: transparent;
 }
 
-.activation-dialog::backdrop {
+.activation-dialog::backdrop,
+.confirm-dialog::backdrop {
   background: rgba(21, 18, 20, 0.62);
   backdrop-filter: blur(5px);
 }
 
-.activation-card {
+.activation-card,
+.confirm-card {
   display: grid;
   gap: 16px;
   padding: 20px;
@@ -1374,7 +1401,8 @@ button:disabled {
   box-shadow: 7px 7px 0 #151214;
 }
 
-.activation-mark {
+.activation-mark,
+.confirm-mark {
   display: grid;
   width: 58px;
   height: 58px;
@@ -1390,11 +1418,29 @@ button:disabled {
   font-weight: 700;
 }
 
-.activation-card h2 {
+.activation-card h2,
+.confirm-card h2 {
   margin: 3px 0 0;
   font-family: "Space Grotesk", "Manrope", sans-serif;
   font-size: clamp(1.8rem, 6vw, 2.5rem);
   line-height: 1.02;
+}
+
+.confirm-card h2 {
+  font-size: clamp(1.7rem, 5vw, 2.25rem);
+}
+
+.confirm-card p:not(.eyebrow) {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+  font-weight: 750;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .activation-copy {
@@ -1730,6 +1776,19 @@ button:disabled {
     min-height: 170px;
   }
 
+  .mini-chart {
+    gap: 6px;
+    min-height: 180px;
+  }
+
+  .chart-day {
+    height: 166px;
+  }
+
+  .bar-value {
+    font-size: 0.58rem;
+  }
+
   .chart-month {
     height: 154px;
   }
@@ -1799,5 +1858,10 @@ button:disabled {
   .modal-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .confirm-actions {
+    display: grid;
+    grid-template-columns: 1fr;
   }
 }

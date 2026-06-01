@@ -11,9 +11,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=28">
+    <link rel="stylesheet" href="styles.css?v=29">
     <script defer src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
-    <script defer src="app.js?v=28"></script>
+    <script defer src="app.js?v=29"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -431,6 +431,28 @@
           <button class="primary-action" type="submit" id="saveTransactionButton">
             <i data-lucide="check"></i>
             <span>Simpan</span>
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="confirm-dialog" id="confirmDialog">
+      <form method="dialog" class="confirm-card">
+        <div class="confirm-mark">
+          <i id="confirmIcon" data-lucide="trash-2"></i>
+        </div>
+        <div>
+          <p class="eyebrow">Konfirmasi</p>
+          <h2 id="confirmTitle">Hapus data?</h2>
+          <p id="confirmMessage">Data ini akan dihapus permanen.</p>
+        </div>
+        <div class="confirm-actions">
+          <button class="secondary-action" type="button" id="confirmCancelButton">
+            Batal
+          </button>
+          <button class="danger-action" type="button" id="confirmActionButton">
+            <i data-lucide="trash-2"></i>
+            <span id="confirmActionLabel">Ya, hapus</span>
           </button>
         </div>
       </form>

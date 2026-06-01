@@ -45,6 +45,7 @@ const state = {
 };
 
 let toastTimer;
+let pendingConfirmation = null;
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -89,13 +90,13 @@ function bindEvents() {
 
     const removeButton = event.target.closest("[data-remove]");
     if (removeButton) {
-      deleteTransaction(removeButton.dataset.remove);
+      confirmDeleteTransaction(removeButton.dataset.remove);
       return;
     }
 
     const removeCategoryButton = event.target.closest("[data-remove-category]");
     if (removeCategoryButton) {
-      removeCategory(removeCategoryButton.dataset.categoryType, removeCategoryButton.dataset.removeCategory);
+      confirmRemoveCategory(removeCategoryButton.dataset.categoryType, removeCategoryButton.dataset.removeCategory);
       return;
     }
 
@@ -110,7 +111,12 @@ function bindEvents() {
   document.getElementById("transactionForm").addEventListener("submit", saveTransactionFromForm);
   document.getElementById("deleteTransactionButton").addEventListener("click", () => {
     const id = document.getElementById("transactionId").value;
-    if (id) deleteTransaction(id);
+    if (id) confirmDeleteTransaction(id);
+  });
+  document.getElementById("confirmCancelButton").addEventListener("click", closeConfirmDialog);
+  document.getElementById("confirmActionButton").addEventListener("click", confirmPendingAction);
+  document.getElementById("confirmDialog").addEventListener("close", () => {
+    pendingConfirmation = null;
   });
 
   document.querySelectorAll("[data-type-option]").forEach((button) => {
@@ -297,6 +303,7 @@ function renderWeeklyChart(transactions) {
       : "linear-gradient(180deg, #ff7a70, #ffbf5c)";
     return `
       <div class="chart-day" title="${escapeHtml(money(day.total))}">
+        <span class="bar-value">${escapeHtml(compactChartMoney(day.total))}</span>
         <div class="bar-track">
           <div class="bar-fill" style="height:${height}%; background:${fill}"></div>
         </div>
@@ -680,6 +687,19 @@ async function saveTransactionFromForm(event) {
   }
 }
 
+function confirmDeleteTransaction(id) {
+  const transaction = state.transactions.find((item) => item.id === id);
+  if (!transaction) return;
+
+  requestConfirmation({
+    title: "Hapus transaksi?",
+    message: `${transactionTitle(transaction)} senilai ${money(transaction.amount)} akan dihapus permanen.`,
+    actionLabel: "Ya, hapus",
+    icon: "trash-2",
+    onConfirm: () => deleteTransaction(id)
+  });
+}
+
 async function deleteTransaction(id) {
   if (!id || state.busy.deletingTransaction || state.busy.savingTransaction) return;
 
@@ -885,6 +905,43 @@ function removeCategory(type, category) {
   setFormType(state.formType);
   refreshIcons();
   showToast("Kategori dihapus");
+}
+
+function confirmRemoveCategory(type, category) {
+  requestConfirmation({
+    title: "Hapus kategori?",
+    message: `Kategori ${category} akan dihapus dari pilihan transaksi baru.`,
+    actionLabel: "Ya, hapus",
+    icon: "trash-2",
+    onConfirm: () => removeCategory(type, category)
+  });
+}
+
+function requestConfirmation({ title, message, actionLabel, icon, onConfirm }) {
+  const dialog = document.getElementById("confirmDialog");
+  pendingConfirmation = onConfirm;
+
+  document.getElementById("confirmTitle").textContent = title;
+  document.getElementById("confirmMessage").textContent = message;
+  document.getElementById("confirmActionLabel").textContent = actionLabel;
+  document.getElementById("confirmIcon").setAttribute("data-lucide", icon || "alert-triangle");
+
+  if (!dialog.open) dialog.showModal();
+  refreshIcons();
+}
+
+function closeConfirmDialog() {
+  const dialog = document.getElementById("confirmDialog");
+  pendingConfirmation = null;
+  if (dialog.open) dialog.close();
+}
+
+function confirmPendingAction() {
+  const action = pendingConfirmation;
+  const dialog = document.getElementById("confirmDialog");
+  pendingConfirmation = null;
+  if (dialog.open) dialog.close();
+  if (action) action();
 }
 
 async function syncFromSheet(showSuccess) {
@@ -1549,6 +1606,15 @@ function compactMoney(value) {
   if (absolute >= 1000000) return `${sign}Rp${compactDecimal(absolute / 1000000)} jt`;
   if (absolute >= 1000) return `${sign}Rp${compactDecimal(absolute / 1000)} rb`;
   return money(amount);
+}
+
+function compactChartMoney(value) {
+  const absolute = Math.abs(Number(value || 0));
+
+  if (absolute >= 1000000000) return `${compactDecimal(absolute / 1000000000)}M`;
+  if (absolute >= 1000000) return `${compactDecimal(absolute / 1000000)}jt`;
+  if (absolute >= 1000) return `${compactDecimal(absolute / 1000)}rb`;
+  return new Intl.NumberFormat("id-ID").format(absolute);
 }
 
 function compactDecimal(value) {
