@@ -227,7 +227,7 @@ function renderDashboard() {
     ? "Online"
     : "Lokal";
 
-  renderWeeklyChart(monthTransactions);
+  renderWeeklyChart(state.transactions);
   renderMonthlyExpenseChart();
   renderCategoryList(document.getElementById("categoryList"), monthTransactions, 5);
   renderTransactionRows(document.getElementById("recentTransactions"), sortTransactions(state.transactions).slice(0, 4));
