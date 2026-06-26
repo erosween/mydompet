@@ -11,9 +11,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=29">
+    <link rel="stylesheet" href="styles.css?v=30">
     <script defer src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
-    <script defer src="app.js?v=29"></script>
+    <script defer src="app.js?v=30"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -315,6 +315,22 @@
                   <label class="visually-hidden" for="incomeCategoryInput">Tambah kategori pemasukan</label>
                   <input id="incomeCategoryInput" type="text" placeholder="Tambah kategori masuk" autocomplete="off">
                   <button class="icon-button" type="submit" aria-label="Tambah kategori pemasukan">
+                    <i data-lucide="plus"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+            <div class="account-manager">
+              <div class="category-manager__group">
+                <div class="category-manager__header">
+                  <strong>Akun</strong>
+                  <small id="accountCount">0 akun</small>
+                </div>
+                <div class="category-chip-list" id="accountList"></div>
+                <form class="category-add-form" id="accountForm">
+                  <label class="visually-hidden" for="accountSettingInput">Tambah akun</label>
+                  <input id="accountSettingInput" type="text" placeholder="Tambah akun" autocomplete="off">
+                  <button class="icon-button" type="submit" aria-label="Tambah akun">
                     <i data-lucide="plus"></i>
                   </button>
                 </form>

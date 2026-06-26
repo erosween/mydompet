@@ -1160,6 +1160,13 @@ button:disabled {
   gap: 14px;
 }
 
+.account-manager {
+  display: grid;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 2px solid rgba(21, 18, 20, 0.08);
+}
+
 .category-manager__group {
   display: grid;
   min-width: 0;

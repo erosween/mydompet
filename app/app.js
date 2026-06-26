@@ -100,6 +100,12 @@ function bindEvents() {
       return;
     }
 
+    const removeAccountButton = event.target.closest("[data-remove-account]");
+    if (removeAccountButton) {
+      confirmRemoveAccount(removeAccountButton.dataset.removeAccount);
+      return;
+    }
+
     const sortButton = event.target.closest("[data-sort-option]");
     if (sortButton) {
       state.transactionSort = sortButton.dataset.sortOption;
@@ -169,6 +175,7 @@ function bindEvents() {
   document.querySelectorAll("[data-category-form]").forEach((form) => {
     form.addEventListener("submit", addCategoryFromForm);
   });
+  document.getElementById("accountForm").addEventListener("submit", addAccountFromForm);
   document.getElementById("syncButton").addEventListener("click", () => syncFromSheet(true));
   document.getElementById("exportExcelButton").addEventListener("click", exportExcel);
 }
@@ -387,6 +394,7 @@ function renderSettings() {
   renderLicenseState();
   renderDemoUsageState();
   renderCategoryManager();
+  renderAccountManager();
 }
 
 function renderLicenseState() {
@@ -495,6 +503,20 @@ function renderCategoryManager() {
   });
 }
 
+function renderAccountManager() {
+  const accounts = getAccounts();
+  const list = document.getElementById("accountList");
+  const count = document.getElementById("accountCount");
+
+  count.textContent = `${accounts.length} akun`;
+  list.innerHTML = accounts.map((account) => `
+    <button class="category-chip" type="button" data-remove-account="${escapeHtml(account)}" aria-label="Hapus akun ${escapeHtml(account)}">
+      <span>${escapeHtml(account)}</span>
+      <i data-lucide="x"></i>
+    </button>
+  `).join("");
+}
+
 function renderCategoryList(container, transactions, limit) {
   const expenses = transactions.filter((item) => item.type === "expense");
   const groups = groupSum(expenses, "category").slice(0, limit);
@@ -524,7 +546,7 @@ function renderCategoryList(container, transactions, limit) {
 
 function renderAccountGrid() {
   const grid = document.getElementById("accountGrid");
-  const accounts = DEFAULT_ACCOUNTS.map((account) => {
+  const accounts = getReportAccounts().map((account) => {
     const total = state.transactions
       .filter((item) => item.account === account)
       .reduce((sum, item) => sum + (item.type === "income" ? item.amount : -item.amount), 0);
@@ -597,10 +619,7 @@ function openTransactionModal(transaction) {
   document.getElementById("transactionId").value = transaction?.id || "";
   document.getElementById("amountInput").value = transaction ? formatInputNumber(String(transaction.amount)) : "";
   document.getElementById("dateInput").value = transaction?.date || toDateKey(new Date());
-  document.getElementById("accountInput").innerHTML = DEFAULT_ACCOUNTS.map((account) => {
-    return `<option value="${escapeHtml(account)}">${escapeHtml(account)}</option>`;
-  }).join("");
-  document.getElementById("accountInput").value = transaction?.account || DEFAULT_ACCOUNTS[0];
+  setAccountOptions(transaction?.account);
   document.getElementById("noteInput").value = transaction?.note || "";
   document.getElementById("deleteTransactionButton").style.visibility = isEditing ? "visible" : "hidden";
 
@@ -630,6 +649,20 @@ function setFormType(type, selectedCategory) {
     return `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`;
   }).join("");
   categoryInput.value = selectedCategory || categories[0];
+}
+
+function setAccountOptions(selectedAccount) {
+  const accountInput = document.getElementById("accountInput");
+  let accounts = getAccounts();
+
+  if (selectedAccount && !accounts.some((account) => account.toLowerCase() === selectedAccount.toLowerCase())) {
+    accounts = [selectedAccount, ...accounts];
+  }
+
+  accountInput.innerHTML = accounts.map((account) => {
+    return `<option value="${escapeHtml(account)}">${escapeHtml(account)}</option>`;
+  }).join("");
+  accountInput.value = selectedAccount || accounts[0];
 }
 
 async function saveTransactionFromForm(event) {
@@ -887,6 +920,34 @@ function addCategoryFromForm(event) {
   showToast("Kategori ditambahkan");
 }
 
+function addAccountFromForm(event) {
+  event.preventDefault();
+
+  const input = document.getElementById("accountSettingInput");
+  const account = normalizeAccountName(input.value);
+  const accounts = getAccounts();
+
+  if (!account) {
+    showToast("Nama akun belum diisi");
+    return;
+  }
+
+  if (accounts.some((item) => item.toLowerCase() === account.toLowerCase())) {
+    showToast("Akun sudah ada");
+    return;
+  }
+
+  state.settings.accounts = [...accounts, account];
+
+  persistSettings();
+  input.value = "";
+  renderAccountManager();
+  renderReports();
+  setAccountOptions(document.getElementById("accountInput").value);
+  refreshIcons();
+  showToast("Akun ditambahkan");
+}
+
 function removeCategory(type, category) {
   const categories = getCategories(type);
 
@@ -907,6 +968,24 @@ function removeCategory(type, category) {
   showToast("Kategori dihapus");
 }
 
+function removeAccount(account) {
+  const accounts = getAccounts();
+
+  if (accounts.length <= 1) {
+    showToast("Minimal satu akun");
+    return;
+  }
+
+  state.settings.accounts = accounts.filter((item) => item !== account);
+
+  persistSettings();
+  renderAccountManager();
+  renderReports();
+  setAccountOptions(document.getElementById("accountInput").value === account ? "" : document.getElementById("accountInput").value);
+  refreshIcons();
+  showToast("Akun dihapus");
+}
+
 function confirmRemoveCategory(type, category) {
   requestConfirmation({
     title: "Hapus kategori?",
@@ -914,6 +993,16 @@ function confirmRemoveCategory(type, category) {
     actionLabel: "Ya, hapus",
     icon: "trash-2",
     onConfirm: () => removeCategory(type, category)
+  });
+}
+
+function confirmRemoveAccount(account) {
+  requestConfirmation({
+    title: "Hapus akun?",
+    message: `Akun ${account} akan dihapus dari pilihan transaksi baru. Data lama tetap aman.`,
+    actionLabel: "Ya, hapus",
+    icon: "trash-2",
+    onConfirm: () => removeAccount(account)
   });
 }
 
@@ -1506,11 +1595,23 @@ function getCategories(type) {
   return normalizeCategoryList(state.settings.categories?.[type], DEFAULT_CATEGORIES[type]);
 }
 
+function getAccounts() {
+  return normalizeAccountList(state.settings.accounts, DEFAULT_ACCOUNTS);
+}
+
+function getReportAccounts() {
+  return normalizeAccountList([...getAccounts(), ...state.transactions.map((item) => item.account)], DEFAULT_ACCOUNTS);
+}
+
 function cloneDefaultCategories() {
   return {
     expense: [...DEFAULT_CATEGORIES.expense],
     income: [...DEFAULT_CATEGORIES.income]
   };
+}
+
+function cloneDefaultAccounts() {
+  return [...DEFAULT_ACCOUNTS];
 }
 
 function normalizeCategories(categories) {
@@ -1538,6 +1639,24 @@ function normalizeCategoryName(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
 }
 
+function normalizeAccountList(list, fallback) {
+  const source = Array.isArray(list) && list.length > 0 ? list : fallback;
+  const normalized = [];
+
+  source.forEach((item) => {
+    const account = normalizeAccountName(item);
+    if (account && !normalized.some((current) => current.toLowerCase() === account.toLowerCase())) {
+      normalized.push(account);
+    }
+  });
+
+  return normalized.length > 0 ? normalized : ["Cash"];
+}
+
+function normalizeAccountName(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
 function persistSettings() {
   localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(state.settings));
 }
@@ -1550,12 +1669,18 @@ function loadSettings() {
     licenseKey: "",
     activatedAt: "",
     demoEntriesUsed: 0,
-    categories: cloneDefaultCategories()
+    categories: cloneDefaultCategories(),
+    accounts: cloneDefaultAccounts()
   };
 
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.settings) || "{}");
-    return { ...fallback, ...saved, categories: normalizeCategories(saved.categories) };
+    return {
+      ...fallback,
+      ...saved,
+      categories: normalizeCategories(saved.categories),
+      accounts: normalizeAccountList(saved.accounts, DEFAULT_ACCOUNTS)
+    };
   } catch {
     return fallback;
   }
