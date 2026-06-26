@@ -627,6 +627,7 @@ button:disabled {
 .settings-form input,
 .settings-form select,
 .license-form input,
+.workspace-switcher select,
 .activation-field input,
 .category-add-form input,
 .form-grid input,
@@ -656,6 +657,7 @@ button:disabled {
 .toolbar select:focus,
 .settings-form input:focus,
 .license-form input:focus,
+.workspace-switcher select:focus,
 .activation-field input:focus,
 .category-add-form input:focus,
 .form-grid input:focus,
@@ -1095,6 +1097,7 @@ button:disabled {
 
 .settings-form label,
 .license-form label,
+.workspace-switcher,
 .activation-field,
 .form-grid label,
 .amount-field {
@@ -1114,6 +1117,7 @@ button:disabled {
 
 .settings-form input,
 .license-form input,
+.workspace-switcher select,
 .activation-field input,
 .category-add-form input,
 .form-grid input,
@@ -1295,6 +1299,19 @@ button:disabled {
 .license-form {
   display: grid;
   gap: 10px;
+}
+
+.workspace-switcher {
+  padding: 12px;
+  border: 2px solid rgba(21, 18, 20, 0.1);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.workspace-switcher select {
+  max-width: none;
+  margin-top: 2px;
+  font-weight: 900;
 }
 
 .trial-meter {
@@ -1871,4 +1888,49 @@ button:disabled {
     display: grid;
     grid-template-columns: 1fr;
   }
+}
+
+.workspace-manager {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 2px solid rgba(21, 18, 20, 0.1);
+}
+
+.workspace-manager-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 2px solid rgba(21, 18, 20, 0.1);
+  border-radius: var(--radius);
+  background: #ffffff;
+  font-size: 0.88rem;
+}
+
+.workspace-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  border: 2px solid rgba(21, 18, 20, 0.12);
+  border-radius: 999px;
+  color: #c23b4a;
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.workspace-delete-btn:hover {
+  border-color: #c23b4a;
+  background: #fff0f0;
+}
+
+.workspace-delete-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.4px;
 }

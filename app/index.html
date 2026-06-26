@@ -11,9 +11,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=30">
+    <link rel="stylesheet" href="styles.css?v=31">
     <script defer src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
-    <script defer src="app.js?v=30"></script>
+    <script defer src="app.js?v=31"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -349,6 +349,11 @@
             <div class="license-card">
               <span>my dompet Pro</span>
               <strong>One-time purchase</strong>
+              <label class="workspace-switcher">
+                Workspace aktif
+                <select id="workspaceSelect"></select>
+                <small class="field-help" id="workspaceHintText">Maksimal 2 workspace. Switch untuk ganti akun.</small>
+              </label>
               <small id="licenseKeyLabel">Belum ada token</small>
               <small class="trial-meter" id="trialStatusLabel">Demo gratis 0/10 input terpakai</small>
               <form class="license-form" id="licenseForm">
@@ -362,6 +367,7 @@
                 </button>
               </form>
             </div>
+            <div class="workspace-manager" id="workspaceManagerList"></div>
           </section>
         </section>
       </main>
