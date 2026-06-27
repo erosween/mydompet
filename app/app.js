@@ -29,6 +29,7 @@ const VIEW_TITLES = {
 
 const ACCENTS = ["#ff7a70", "#ffbf5c", "#baff5a", "#41e3bd", "#8ea2ff", "#b58cff", "#f58ac8"];
 const LOCAL_WORKSPACE_ID = "local";
+const ADD_LICENSE_OPTION = "__add_license__";
 const ACTIVE_WORKSPACE_ID = initializeWorkspaceStorage();
 
 const state = {
@@ -36,6 +37,7 @@ const state = {
   workspaceId: ACTIVE_WORKSPACE_ID,
   transactions: [],
   settings: loadSettings(ACTIVE_WORKSPACE_ID),
+  showLicenseForm: getLicenseWorkspaceCount() === 0,
   selectedMonth: toMonthKey(new Date()),
   search: "",
   typeFilter: "all",
@@ -124,8 +126,7 @@ function bindEvents() {
         icon: "trash-2",
         onConfirm: async () => {
           await removeWorkspace(workspaceId);
-          renderWorkspaceSwitcher();
-          renderWorkspaceManager();
+          render();
           showToast("Workspace dihapus");
         }
       });
@@ -186,6 +187,17 @@ function bindEvents() {
   });
 
   document.getElementById("workspaceSelect").addEventListener("change", (event) => {
+    if (event.target.value === ADD_LICENSE_OPTION) {
+      showAddLicenseForm();
+      return;
+    }
+
+    state.showLicenseForm = false;
+    if (event.target.value === state.workspaceId) {
+      renderLicenseState();
+      return;
+    }
+
     switchWorkspace(event.target.value);
   });
   document.getElementById("settingsForm").addEventListener("submit", saveSettingsFromForm);
@@ -430,20 +442,52 @@ function renderSettings() {
 
 function renderWorkspaceSwitcher() {
   const selector = document.getElementById("workspaceSelect");
-  const workspaces = getWorkspaces();
+  const licenseWorkspaces = getLicenseWorkspaces();
+  const baseWorkspaces = licenseWorkspaces.length > 0
+    ? licenseWorkspaces
+    : getWorkspaces().filter((workspace) => workspace.id === LOCAL_WORKSPACE_ID);
+  const canAddLicense = licenseWorkspaces.length < MAX_WORKSPACES;
+  const options = canAddLicense
+    ? [...baseWorkspaces, { id: ADD_LICENSE_OPTION, label: "+ Tambah license" }]
+    : baseWorkspaces;
 
-  selector.innerHTML = workspaces.map((workspace) => {
+  selector.innerHTML = options.map((workspace) => {
     return `<option value="${escapeHtml(workspace.id)}">${escapeHtml(workspace.label)}</option>`;
   }).join("");
 
-  selector.value = workspaces.some((workspace) => workspace.id === state.workspaceId)
+  selector.value = baseWorkspaces.some((workspace) => workspace.id === state.workspaceId)
     ? state.workspaceId
-    : workspaces[0]?.id || LOCAL_WORKSPACE_ID;
+    : baseWorkspaces[0]?.id || ADD_LICENSE_OPTION;
+}
+
+function showAddLicenseForm() {
+  const input = document.getElementById("licenseKeyInput");
+  const licenseForm = document.getElementById("licenseForm");
+
+  if (getLicenseWorkspaceCount() >= MAX_WORKSPACES) {
+    state.showLicenseForm = false;
+    renderWorkspaceSwitcher();
+    renderLicenseState();
+    showToast(`Maksimal ${MAX_WORKSPACES} license aktif`);
+    return;
+  }
+
+  state.showLicenseForm = true;
+  renderWorkspaceSwitcher();
+  renderLicenseState();
+
+  if (licenseForm) licenseForm.style.display = "grid";
+  if (input) {
+    input.value = "";
+    input.focus();
+  }
+  showToast("Masukkan token license baru");
 }
 
 async function switchWorkspace(workspaceId, options = {}) {
   if (!workspaceId || workspaceId === state.workspaceId || state.busy.syncing || state.busy.savingTransaction) return;
 
+  state.showLicenseForm = false;
   persistSettings();
   saveTransactions();
   closeTransactionModal(true);
@@ -492,7 +536,8 @@ function renderLicenseState() {
   }
 
   if (licenseForm) {
-    licenseForm.style.display = atLimit ? "none" : "grid";
+    const shouldShowForm = !atLimit && (workspaceCount === 0 || state.showLicenseForm);
+    licenseForm.style.display = shouldShowForm ? "grid" : "none";
   }
 
   if (trialStatus) {
@@ -582,6 +627,7 @@ async function activateLicenseFromForm(event, inputId) {
       licenseKey: token,
       activatedAt: existingSettings.activatedAt || new Date().toISOString()
     };
+    state.showLicenseForm = false;
 
     persistSettings();
 
@@ -1868,15 +1914,31 @@ function canAddWorkspace(token) {
 async function removeWorkspace(workspaceId) {
   if (workspaceId === LOCAL_WORKSPACE_ID) return false;
 
+  state.showLicenseForm = false;
+  const wasActiveWorkspace = state.workspaceId === workspaceId;
   const workspaces = getWorkspaces().filter((w) => w.id !== workspaceId);
   saveWorkspaces(workspaces);
 
   localStorage.removeItem(workspaceSettingsKey(workspaceId));
   localStorage.removeItem(workspaceTransactionsKey(workspaceId));
 
-  if (state.workspaceId === workspaceId) {
-    const remaining = getWorkspaces();
-    await switchWorkspace(remaining[0]?.id || LOCAL_WORKSPACE_ID, { silent: true });
+  if (wasActiveWorkspace) {
+    let remaining = getWorkspaces();
+
+    if (remaining.length === 0) {
+      const defaultSettings = createDefaultSettings();
+      localStorage.setItem(workspaceSettingsKey(LOCAL_WORKSPACE_ID), JSON.stringify(defaultSettings));
+      saveWorkspaces([workspaceFromSettings(LOCAL_WORKSPACE_ID, defaultSettings)]);
+      remaining = getWorkspaces();
+    }
+
+    const nextWorkspaceId = remaining[0]?.id || LOCAL_WORKSPACE_ID;
+    state.workspaceId = nextWorkspaceId;
+    localStorage.setItem(STORAGE_KEYS.activeWorkspace, nextWorkspaceId);
+    state.settings = loadSettings(nextWorkspaceId);
+    state.transactions = loadTransactions(nextWorkspaceId);
+    state.selectedMonth = latestMonthKey(state.transactions) || toMonthKey(new Date());
+    state.transactionMonth = "all";
   }
 
   return true;
